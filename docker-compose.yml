@@ -1,0 +1,101 @@
+version: "3.8"
+
+services:
+  timescaledb:
+    image: timescale/timescaledb:latest-pg15
+    container_name: fab_timescaledb
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: fab_maintenance
+    ports:
+      - "5432:5432"
+    volumes:
+      - tsdb_data:/var/lib/postgresql/data
+      - ./initdb:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fab_api
+    environment:
+      DB_HOST: timescaledb
+      DB_PORT: 5432
+      DB_NAME: fab_maintenance
+      DB_USER: postgres
+      DB_PASS: postgres
+      GRPC_PORT: 50051
+    ports:
+      - "8000:8000"
+      - "50051:50051"
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+    restart: unless-stopped
+
+  simulator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fab_simulator
+    command: python simulator.py
+    environment:
+      GRPC_SERVER: api:50051
+      NUM_DEVICES: 200
+      REPORT_INTERVAL: 30
+      BASELINE_CVD_TEMP: "350"
+      BASELINE_CVD_VIB: "2.5"
+      BASELINE_CVD_PWR: "500"
+      BASELINE_PVD_TEMP: "280"
+      BASELINE_PVD_VIB: "3.0"
+      BASELINE_PVD_PWR: "800"
+      BASELINE_ETCH_TEMP: "180"
+      BASELINE_ETCH_VIB: "2.0"
+      BASELINE_ETCH_PWR: "600"
+      BASELINE_LITHO_TEMP: "120"
+      BASELINE_LITHO_VIB: "1.0"
+      BASELINE_LITHO_PWR: "300"
+      BASELINE_IMPLANT_TEMP: "250"
+      BASELINE_IMPLANT_VIB: "3.5"
+      BASELINE_IMPLANT_PWR: "700"
+      BASELINE_CMP_TEMP: "200"
+      BASELINE_CMP_VIB: "4.0"
+      BASELINE_CMP_PWR: "200"
+      BASELINE_DIFF_TEMP: "400"
+      BASELINE_DIFF_VIB: "1.5"
+      BASELINE_DIFF_PWR: "450"
+      BASELINE_CLEAN_TEMP: "150"
+      BASELINE_CLEAN_VIB: "1.8"
+      BASELINE_CLEAN_PWR: "150"
+      BASELINE_METRO_TEMP: "100"
+      BASELINE_METRO_VIB: "0.5"
+      BASELINE_METRO_PWR: "100"
+      BASELINE_DEPO_TEMP: "320"
+      BASELINE_DEPO_VIB: "2.8"
+      BASELINE_DEPO_PWR: "550"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    container_name: fab_nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  tsdb_data:

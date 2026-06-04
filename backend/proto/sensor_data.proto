@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package sensor;
+
+service SensorService {
+  rpc ReportSensorData (SensorReport) returns (SensorAck);
+  rpc StreamSensorData (stream SensorReport) returns (stream SensorAck);
+}
+
+message SensorReport {
+  string device_id = 1;
+  double temperature = 2;
+  double vibration = 3;
+  double rf_power = 4;
+  int64 timestamp = 5;
+}
+
+message SensorAck {
+  bool success = 1;
+  string message = 2;
+}

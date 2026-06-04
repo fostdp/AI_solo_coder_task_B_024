@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>半导体晶圆厂设备预防性维护平台</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <h1>🏭 半导体晶圆厂设备预防性维护平台</h1>
+            <div class="view-switcher">
+                <button class="view-btn active" data-view="factory">🗺️ 多厂区视图</button>
+                <button class="view-btn" data-view="devices">📊 设备矩阵视图</button>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="summary-bar" id="summaryBar">
+                <span class="summary-item"><span class="summary-label">厂区总数</span><span class="summary-value" id="totalFactories">--</span></span>
+                <span class="summary-item"><span class="summary-label">设备总数</span><span class="summary-value" id="totalDevices">--</span></span>
+                <span class="summary-item"><span class="summary-label">在线</span><span class="summary-value online" id="onlineDevices">--</span></span>
+                <span class="summary-item"><span class="summary-label">平均健康度</span><span class="summary-value" id="avgHealth">--</span></span>
+                <span class="summary-item"><span class="summary-label">低健康设备</span><span class="summary-value warning" id="lowHealthDevices">--</span></span>
+                <span class="summary-item"><span class="summary-label">待处理工单</span><span class="summary-value danger" id="pendingOrders">--</span></span>
+                <span class="summary-item"><span class="summary-label">活跃告警</span><span class="summary-value danger" id="activeAlerts">--</span></span>
+            </div>
+            <div class="header-time" id="headerTime"></div>
+        </div>
+    </header>
+
+    <div class="legend-bar" id="devicesLegendBar">
+        <span class="legend-label">健康评分色标：</span>
+        <div class="legend-gradient"></div>
+        <span class="legend-text">0（危险）</span>
+        <span class="legend-text">60</span>
+        <span class="legend-text">100（正常）</span>
+        <button class="back-btn" id="backToFactories" style="display:none;">← 返回厂区列表</button>
+        <div class="filter-group" id="filterGroup">
+            <label>筛选区域：</label>
+            <select id="filterArea"><option value="">全部</option></select>
+            <label>筛选类型：</label>
+            <select id="filterType"><option value="">全部</option></select>
+            <label>筛选健康度：</label>
+            <select id="filterHealth">
+                <option value="">全部</option>
+                <option value="good">正常 (≥80)</option>
+                <option value="warn">预警 (60-80)</option>
+                <option value="danger">危险 (&lt;60)</option>
+            </select>
+            <label>
+                <input type="checkbox" id="showLifePrediction" checked>
+                <span>显示剩余寿命</span>
+            </label>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="factory-map-container" id="factoryMapContainer">
+            <div class="factory-map" id="factoryMap"></div>
+        </div>
+
+        <div class="device-grid-container" id="deviceGridContainer" style="display:none;">
+            <div class="device-grid" id="deviceGrid"></div>
+        </div>
+
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2 id="sidebarTitle">设备详情</h2>
+                <button class="sidebar-close" id="sidebarClose">✕</button>
+            </div>
+            <div class="sidebar-body" id="sidebarBody">
+                <div class="device-info" id="deviceInfo"></div>
+                <div class="life-prediction" id="lifePrediction" style="display:none;">
+                    <h3>寿命预测</h3>
+                    <div class="prediction-card">
+                        <div class="prediction-value" id="predictionValue">--</div>
+                        <div class="prediction-detail" id="predictionDetail"></div>
+                    </div>
+                </div>
+                <div class="spare-parts-info" id="sparePartsInfo" style="display:none;">
+                    <h3>备件库存</h3>
+                    <div id="sparePartsList"></div>
+                </div>
+                <div class="trend-charts">
+                    <h3>近24小时趋势</h3>
+                    <div class="chart-container">
+                        <canvas id="chartTemperature" width="500" height="180"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chartVibration" width="500" height="180"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chartRfPower" width="500" height="180"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chartHealth" width="500" height="180"></canvas>
+                    </div>
+                </div>
+                <div class="device-work-orders" id="deviceWorkOrders"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="alert-container" id="alertContainer"></div>
+
+    <div class="modal" id="purchaseOrderModal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h3>采购申请管理</h3>
+            <button class="modal-close" id="modalClose">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="po-tabs">
+                <div class="po-filters">
+                    <select id="poStatusFilter">
+                        <option value="">全部状态</option>
+                        <option value="pending">待审批</option>
+                        <option value="approved">已审批</option>
+                        <option value="ordered">已下单</option>
+                        <option value="received">已收货</option>
+                    </select>
+                </div>
+                <div class="po-list" id="poList"></div>
+            </div>
+        </div>
+    </div>
+
+    <button class="floating-btn" id="openPurchaseBtn" title="采购申请">📦</button>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
